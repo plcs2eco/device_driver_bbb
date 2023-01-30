@@ -69,15 +69,18 @@ static struct mydrv_private_data mydrv_data =
 
 static int check_permission(int dev_perm, int acc_mode ){
     pr_info("dev_perm = %x\n", dev_perm);
-    if(dev_perm == RDWR)
+    if(dev_perm == RDWR){
         pr_info("Read write dev_perm = %x\n", dev_perm);
         return 0;
-    if((dev_perm == RDONLY) && ((acc_mode & FMODE_READ) && !(acc_mode & FMODE_WRITE))) 
+    }
+    if((dev_perm == RDONLY) && ((acc_mode & FMODE_READ) && !(acc_mode & FMODE_WRITE))){ 
         pr_info("Read Only dev_perm = %x\n", dev_perm);
         return 0;
-    if((dev_perm == WRONLY) && (!(acc_mode & FMODE_READ) && (acc_mode & FMODE_WRITE))) 
+    }
+    if((dev_perm == WRONLY) && (!(acc_mode & FMODE_READ) && (acc_mode & FMODE_WRITE))){ 
         pr_info("Write Only dev_perm = %x\n", dev_perm);
         return 0;
+    }
 
     return -EPERM;
 }
@@ -98,9 +101,8 @@ static int my_gpio_open(struct inode *inode, struct file *filp)
     ret = check_permission(mydev_data->perm, filp->f_mode);
 
 	(!ret)?pr_info("open was successful ret = %d\n", ret):pr_info("open was unsuccessful ret = %d\n", ret);
-    pr_info("cdev_open[mydev_data from container_of = %x]\n", mydev_data);
 
-    return 0;
+    return ret;
 }
 static int my_gpio_release(struct inode *inode, struct file *filp)
 {
@@ -198,6 +200,7 @@ static struct file_operations my_cdev_fops = {
 static int my_uevent(struct device *dev, struct kobj_uevent_env *env)
 {
     add_uevent_var(env, "DEVMODE=%#o", 0666);
+    pr_info("called in =%s\n", __func__);
     return 0;
 }
 
@@ -231,7 +234,6 @@ static int __init init_my_gpio(void)
         cdev_init(&mydrv_data.mydev_data[i].cdev, &my_cdev_fops);
    		mydrv_data.mydev_data[i].cdev.owner = THIS_MODULE;
         ret = cdev_add(&mydrv_data.mydev_data[i].cdev, mydrv_data.dev_id + i, 1);
-        // ret = cdev_add(&mydrv_data.mydev_data[i].cdev, &mydrv_data.dev_id + i, 1);
         if (ret != 0)
         {
             pr_err("cdev_add failed. ret = %d\n", ret);
